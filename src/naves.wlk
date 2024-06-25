@@ -1,7 +1,7 @@
 class Nave{
-	var property velocidad
-	var property direccion = 0
-	var property combustible
+	var velocidad
+	var direccion = 0
+	var combustible
 	
 	method acelerar(nuevaVel){velocidad = 100000.min(velocidad+nuevaVel)}
 	method desacelerar(nuevaVel){velocidad = 0.max(velocidad-nuevaVel)}
@@ -15,7 +15,7 @@ class Nave{
 		self.acelerar(5000)
 	}
 	method cargarCombustible(valor){combustible+=valor}
-	method descargarCombustible(valor){combustible-=0.max(combustible-valor)}
+	method descargarCombustible(valor){combustible=0.max(combustible-valor)}
 	method estaTranquila() = combustible>=4000 and velocidad<=12000
 	method recibirAmenaza(){
 		self.escapar()
@@ -28,10 +28,9 @@ class Nave{
 }
 
 class NaveBaliza inherits Nave{
-	var color
+	var color = "azul"
 	var cambioDeColor = false
 	
-	method color() = color
 	method cambiarColor(nuevoColor){
 		color=nuevoColor
 		cambioDeColor = true
@@ -44,38 +43,43 @@ class NaveBaliza inherits Nave{
 	override method estaTranquila() = super() and color!="rojo"
 	override method escapar(){self.irHaciaElSol()}
 	override method avisar(){self.cambiarColor("rojo")}
-	override method tienePocaActividad() = cambioDeColor
+	override method tienePocaActividad() = not cambioDeColor
 }
 
 class NavePasajeros inherits Nave{
-	var property pasajeros
-	var property racionesComida = 0
-	var property racionesBebida = 0
+	const pasajeros
+	var racionesComida = 0
+	var racionesBebida = 0
 	var comidaServida = 0
 	
+	method racionesComida() = racionesComida
+	method racionesBebida() = racionesBebida
+	method comidaServida() = comidaServida
+	
 	method cargarComida(valor){racionesComida=valor}
-	method descargarComida(valor){
-		racionesComida-=0.max(racionesComida-valor)
-		comidaServida+=valor
-	}
+	method descargarComida(valor){racionesComida-=0.max(racionesComida-valor)}
 	method cargarBebida(valor){racionesBebida=valor}
 	method descargarBebida(valor){racionesBebida-=0.max(racionesBebida-valor)}
+	method servirComida(valor){
+		comidaServida+=racionesComida.min(valor)
+		self.descargarComida(valor)
+	}
 	override method prepararViaje(){
 		super()
 		self.cargarComida(4*pasajeros)
 		self.cargarBebida(6*pasajeros)
 		self.acercarseUnPocoAlSol()
 	}
-	override method escapar(){self.acelerar(velocidad*2)}
+	override method escapar(){self.acelerar(velocidad)}
 	override method avisar(){
-		self.descargarComida(1*pasajeros)
+		self.servirComida(pasajeros)
 		self.descargarBebida(2*pasajeros)
 	}
 	override method tienePocaActividad() = comidaServida<50
 }
 
 class NaveHospital inherits NavePasajeros{
-	var property quirofanosListos
+	var quirofanosListos = false
 	
 	override method estaTranquila() = super() and not quirofanosListos
 	override method recibirAmenaza(){
@@ -86,22 +90,26 @@ class NaveHospital inherits NavePasajeros{
 }
 
 class NaveCombate inherits Nave{
-	var estaVisible = true
+	var estaVisible = false
 	var misilesDesplegados = false
 	const mensajesEmitidos = []
 	
 	method estaVisible() = estaVisible
 	method ponerseVisible(){estaVisible=true}
 	method ponerseInvisible(){estaVisible=false}
+	
 	method misilesDesplegados() = misilesDesplegados
 	method desplegarMisiles(){misilesDesplegados=true}
 	method replegarMisiles(){misilesDesplegados=false}
+	
 	method mensajesEmitidos() = mensajesEmitidos
 	method emitirMensaje(mensaje){mensajesEmitidos.add(mensaje)}
 	method primerMensaje() = mensajesEmitidos.first()
 	method ultimoMensaje() = mensajesEmitidos.last()
 	method emitioMensaje(mensaje) = mensajesEmitidos.contains(mensaje)
-	method esEscueta() = mensajesEmitidos.all({m=>m.size()<=30})
+	//method esEscueta() = mensajesEmitidos.all({m=>m.size()<=30})
+	method esEscueta() = not mensajesEmitidos.any({m=>m.size()>30})
+	
 	override method prepararViaje(){
 		super()
 		self.ponerseVisible()
